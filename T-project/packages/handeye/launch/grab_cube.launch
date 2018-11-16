@@ -1,0 +1,43 @@
+<launch>
+	<!-- The ARUCO marker properties -->
+	<arg name="markerid" 	default="582" />
+	<arg name="markersize"	default="0.07" /> 
+
+	<!-- The camera topics and frame to use for calibration -->
+	<arg name="camera" doc="camera namespace" default="/camera/color" />
+	<arg name="image" 			default="$(arg camera)/image_raw"/>
+	<arg name="camera_info"		default="$(arg camera)/camera_info" />
+	<arg name="camera_frame"	default="$(arg camera)_optical_frame" />
+	<arg name="marker_frame"	default="/hand_eye$(arg camera)/aruco_marker_frame" />
+	<arg name="reference_frame"	default="$(arg camera_frame)" />
+
+	<arg name="sample_rate"	default="5" />
+	<arg name="interactive" default="false" />
+	<arg name="sample_num" 	default="200" />
+	<arg name="data_file_name"	default="$(find handeye)/data/CalibrationOutput.yaml" />
+
+	<!-- Launch Realsense
+	<include file="$(find realsense2_camera)/launch/rs_camera.launch" output='log'/> -->
+
+	<!-- Launch aruco tracker -->
+	<node name="aruco_tracker" pkg="aruco_ros" type="single">
+		<remap from="/camera_info" 	to="$(arg camera_info)" />
+		<remap from="/image"		to="$(arg image)" />
+
+		<param name="image_is_rectified"	value="true" />
+		<param name="corner_refinement"		value="LINES" />
+		<param name="marker_size" 		value="$(arg markersize)" />
+		<param name="marker_id"			value="$(arg markerid)"	/>
+		<param name="reference_frame"		value="$(arg reference_frame)" />
+		<param name="camera_frame"		value="$(arg camera_frame)" />
+		<param name="marker_frame"		value="$(arg marker_frame)" />
+	</node>
+
+	<!-- Launch grab node to load the transform matrix and grab the cube -->
+	<node name="cube_grabber" pkg="handeye" type="grab_cube.py" output="screen" >
+		<param name="data_file_name"	value="$(arg data_file_name)" />
+		<param name="camera_frame"	value="$(arg camera_frame)" />
+		<param name="marker_frame"	value="$(arg marker_frame)" />
+		<param name="base_frame"	value="/base_link" />
+	</node>
+</launch>
